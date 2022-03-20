@@ -1,0 +1,10 @@
+#gameScreen{
+    position: absolute;
+    border: 1px solid #000;
+    left: calc(50% - 400px);
+    top: calc(50% - 300px);
+    z-index: 1;
+}
+#img_ball{
+    display: none;
+}
