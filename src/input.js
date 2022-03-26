@@ -1,8 +1,9 @@
+import { GAME_STATE } from './game.js';
+
 export default class InputHandler {
     constructor(paddle, game) {
         
         document.addEventListener('keydown', event => {
-            console.log(event)
             switch (event.key) {
                 case 'ArrowLeft':
                     paddle.moveLeft();
@@ -12,6 +13,11 @@ export default class InputHandler {
                     break;
                 case 'Escape':
                     game.togglePause()
+                    break;
+                case ' ':
+                    if(game.gameState === GAME_STATE.MENU) {
+                        game.start();
+                    }
                     break;
                 
             }
