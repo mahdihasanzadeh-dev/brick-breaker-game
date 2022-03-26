@@ -2,7 +2,7 @@ import Paddle from './paddle.js';
 import InputHandler from './input.js';
 import Ball from './ball.js';
 import Brick from './brick.js';
-import { buildLevel, level1 } from './levels.js';
+import { buildLevel, level1, level2 } from './levels.js';
 
 export const GAME_STATE = {
     PAUSED: 0,
@@ -20,16 +20,21 @@ export default class Game {
         this.paddle = new Paddle(this);
         this.ball = new Ball(this);
         this.gameObjects = [];
+        this.bricks = []
+        this.lives = 3;
+        this.levels = [level1, level2];
+        this.currentLevel = 0;
         new InputHandler(this.paddle, this);
     }
 
     start() {
+        if(this.gameState !== GAME_STATE.MENU && this.gameState !== GAME_STATE.NEWLEVEL) return;
         
-        let bricks = buildLevel(this, level1);
+        this.bricks = buildLevel(this, this.levels[this.currentLevel]);
+        this.ball.reset();
         this.gameObjects = [
             this.ball,
-            this.paddle,
-            ...bricks
+            this.paddle
         ]
 
         this.gameState = GAME_STATE.RUNNING
@@ -39,14 +44,27 @@ export default class Game {
 
 
     update(deltaTime) {
-        if(this.gameState === GAME_STATE.PAUSED || this.gameState === GAME_STATE.MENU) return;
+        if(this.lives === 0) {
+            this.gameState = GAME_STATE.GAMEOVER
+        }
 
-        this.gameObjects.forEach(object=>object.update(deltaTime));
-        this.gameObjects = this.gameObjects.filter(object=>!object.markedForDeletion);
+        if(this.gameState === GAME_STATE.PAUSED 
+            || this.gameState === GAME_STATE.MENU 
+            || this.gameState === GAME_STATE.GAMEOVER
+        ) return;
+
+        if(this.bricks.length === 0) {
+            this.currentLevel++;
+            this.gameState = GAME_STATE.NEWLEVEL;
+            this.start();
+        }
+
+        [...this.gameObjects, ...this.bricks].forEach(object=>object.update(deltaTime));
+        this.bricks = this.bricks.filter(brick=>!brick.markedForDeletion);
     }
 
     draw(ctx) {
-        this.gameObjects.forEach(object=>object.draw(ctx));
+        [...this.gameObjects, ...this.bricks].forEach(object=>object.draw(ctx));
 
         if(this.gameState === GAME_STATE.PAUSED) {
             ctx.rect(0,0,this.gameWidth, this.gameHeight);
@@ -65,6 +83,15 @@ export default class Game {
             ctx.fillStyle = 'white';
             ctx.textAlign = 'center';
             ctx.fillText('Press Space to start', this.gameWidth/2, this.gameHeight/2);
+        }
+        if(this.gameState === GAME_STATE.GAMEOVER) {
+            ctx.rect(0,0,this.gameWidth, this.gameHeight);
+            ctx.fillStyle = 'rgba(0,0,0,0.5)';
+            ctx.fill();
+            ctx.font = '30px Arial';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.fillText('Game Over', this.gameWidth/2, this.gameHeight/2);
         }
     }
 
